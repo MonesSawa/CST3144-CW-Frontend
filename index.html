@@ -1,211 +1,90 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>After School Club</title>
 
-    <!-- adding vue to code -->
+    <!-- Vue and FontAwesome links -->
     <script src="https://cdn.jsdelivr.net/npm/vue@2.7.16/dist/vue.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
-        integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg=="
-        crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
-        /* Body CSS to make columns and fit in page*/
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-        }
-
-        /*Header CSS to display site name and checkout button later*/
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
-            padding: 20px;
-            background-color: #333;
-            color: white;
-        }
-
-        /*padding and fitting into page*/
-        main {
-            width: 100%;
-            max-width: 1200px;
-            padding: 20px;
-        }
-
-        /* setting up my products to fit in a gird*/
-        .product-grid {
-            display: grid;
-            /* making the "grid" and giving the distance between each product */
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 20px;
-        }
-
-        /* how each product will be displayed */
-        .product {
-            /* adding a border to differntiate products */
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 15px;
-            /* giving the border a shadow to make it look smoother */
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            text-align: center;
-        }  
-
-        /* Image CSS */
-        .product img {
-            max-width: 100%;
-            border-radius: 8px;
-        }
-
-        /* the add ot cart button */
-        .product button {
-            margin-top: 10px;
-            padding: 10px 15px;
-            background-color: #28a745;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        /* When the product is out of stock */
-        .product button:disabled {
-            background-color: #ddd;
-            cursor: not-allowed;
-        }
-
-        /* when checkout is clicked, disable background and center the checkout pop up*/
-        .overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.6);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: black;
-        }
-    
-        /* the checkout modal(the pop up) */
-        .modal {
-            background: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            width: 400px;
-            max-width: 90%;
-        }
-
-        /* Your Cart CSS */
-        .modal h3 {
-            margin-top: 0;
-        }
-
-        /* the X button*/
-        .close-btn {
-            float: right;
-            cursor: pointer;
-            font-size: 1.5em;
-            color: #333;
-        }
-
-        /* How to display items in my "modal" */
-        .cart-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-
-        /* remove/edit */
-        .cart-controls {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        /* paddings and customisation */
-        .cart-controls button {
-            padding: 5px 10px;
-            font-size: 1em;
-        }
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; flex-direction: column; }
+        header { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 20px; background-color: #333; color: white; }
+        main { width: 100%; max-width: 1200px; padding: 20px; }
+        .product-grid { display: grid; gap: 20px; grid-template-columns: repeat(5, 1fr); }
+        .product { border: 1px solid #ddd; border-radius: 8px; padding: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); text-align: center; }
+        .product img { max-width: 100%; border-radius: 8px; }
+        .product button { margin-top: 10px; padding: 10px 15px; background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        .product button:disabled { background-color: #ddd; cursor: not-allowed; }
+        .cart-page { text-align: center; }
+        .cart-item { display: grid;grid-template-columns: repeat(5, 1fr); flex-direction: column; align-items: center; margin-bottom: 20px; border: 1px solid #ddd; padding: 10px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }
+        .cart-item img { max-width: 100px; border-radius: 8px; margin-bottom: 10px; }
+        .cart-controls { display: flex; align-items: center; gap: 5px; }
+        .cart-controls button { padding: 5px 10px; font-size: 1em; }
     </style>
 </head>
-
-<!-- HTML front end part -->
 <body>
     <div id="app">
-        <!-- setting up the header -->
+        <!-- Header with Cart Button -->
         <header>
             <h1 v-text="sitename"></h1>
-            <button v-on:click="toggleCartModal">
-                {{ cartItemCount }}
-                <span class="fas fa-cart-plus"></span>
-                Checkout
+            <button :disabled="cart.length === 0" @click="toggleCartView">
+                <span v-if="cartItemCount">{{ cartItemCount }}</span>
+                <span class="fas fa-cart-plus"></span> Checkout
             </button>
         </header>
 
-        <!-- items to put in grid using VUE (v-text) -->
-        <main>
-            <div v-if="showProduct" class="product-grid">
+        <!-- Products Page -->
+        <main v-if="showProduct">
+            <div class="product-grid">
                 <div v-for="product in products" :key="product.id" class="product">
-                    <figure>
-                        <img :src="product.image" alt="Product Image">
-                    </figure>
+                    <img width="100" height="100" :src="product.image" alt="Product Image">
                     <h2 v-text="product.title"></h2>
                     <p v-html="product.description"></p>
                     <p>Price: ${{ product.price }}</p>
                     <p>Available: {{ product.availableInventory }}</p>
-                    <button :disabled="!canAddToCart(product)" v-on:click="addToCart(product)">
+                    <button :disabled="!canAddToCart(product)" @click="addToCart(product)">
                         Add to cart
                     </button>
                 </div>
             </div>
         </main>
 
-        <!-- Cart Modal (pop-up) -->
-        <div v-if="isCartModalVisible" class="overlay" @click="toggleCartModal">
-            <div class="modal" @click.stop>
-                <span class="close-btn" @click="toggleCartModal">&times;</span>
-                <h3>Your Cart</h3>
-                <div v-if="cartDetails.length">
-                    <div v-for="item in cartDetails" :key="item.id" class="cart-item">
-                        <span>{{ item.title }} - ${{ item.price * item.quantity }}</span>
-                        <div class="cart-controls">
-                            <button @click="removeFromCart(item)">Remove</button>
-                        </div>
+        <!-- Cart Page -->
+        <main v-if="!showProduct" class="cart-page">
+            <h3>Your Cart</h3>
+            <div v-if="cartDetails.length">
+                <div v-for="item in cartDetails" :key="item.id" class="cart-item">
+                    <img :src="item.image" alt="Product Image">
+                    <h2 v-text="item.title"></h2>
+                    <p v-html="item.description"></p>
+                    <p>Price per unit: ${{ item.price }}</p>
+                    <p>Total: ${{ item.price * item.quantity }}</p>
+                    <p>Quantity: {{ item.quantity }}</p>
+                    <div class="cart-controls">
+                        <button @click="removeFromCart(item)">Remove</button>
                     </div>
-                    <p>Total: ${{ cartTotal }}</p>
                 </div>
-                <div v-else>
-                    <p>Your cart is empty.</p>
-                </div>
+                <p>Total Cart Amount: ${{ cartTotal }}</p>
+                <button @click="checkout" :disabled="cart.length === 0">Proceed to Checkout</button>
             </div>
-        </div>
+            <div v-else>
+                <p>Your cart is empty.</p>
+            </div>
+            <button @click="toggleCartView">Back to Products</button>
+        </main>
     </div>
 
-
-    <!-- JS to set up the products and their details -->
-    <script type="text/javascript">
+    <!-- Vue JS for Functionality -->
+    <script>
         let webstore = new Vue({
             el: '#app',
             data: {
                 sitename: 'After School Club',
                 showProduct: true,
-                isCartModalVisible: false,
                 products: [
-                    { id: 1001, title: "Art class", description: "1 Hour of class on classic arts", price: 64, image: "images/art.jpg", availableInventory: 5 },
+                    { id: 1001, title: "Art class", description: "1 Hour of art class", price: 64, image: "images/art.jpg", availableInventory: 5 },
                     { id: 1002, title: "Music class", description: "1 Hour of music theory", price: 60, image: "images/music.jpg", availableInventory: 3 },
                     { id: 1003, title: "Math class", description: "1 Hour of Math class", price: 70, image: "images/math.jpg", availableInventory: 2 },
                     { id: 1004, title: "History class", description: "1 Hour of History", price: 75, image: "images/history.jpg", availableInventory: 1 },
@@ -218,30 +97,31 @@
                 ],
                 cart: []
             },
-            // the methods i will be using to make app funciton
             methods: {
-                //add to cart and making product stock/inventory functionality
+                toggleCartView() {
+                    this.showProduct = !this.showProduct;
+                },
                 addToCart(product) {
                     product.availableInventory--;
                     this.cart.push(product.id);
                 },
-                // pop-up visibility
-                toggleCartModal() {
-                    this.isCartModalVisible = !this.isCartModalVisible;
-                },
-                //remove item entirely (NOT FUNCTIONING RIGHT "DOES NOT INCREASE INVENTORY ON REMOVAL")
                 removeFromCart(item) {
-                    const quantityInCart = this.cart.filter(id => id === item.id).length;
                     this.cart = this.cart.filter(id => id !== item.id);
-                    item.availableInventory += quantityInCart;
+                    const product = this.products.find(p => p.id === item.id);
+                    if (product) {
+                        product.availableInventory += item.quantity;
+                    }
+                },
+                checkout() {
+                    this.cart = [];
+                    this.products.forEach(product => product.availableInventory = product.availableInventory);
+                    this.toggleCartView();
                 }
             },
             computed: {
-                // get total amount of prodcuts in cart
                 cartItemCount() {
                     return this.cart.length || "";
                 },
-                //display product amount and cart details
                 cartDetails() {
                     return this.products
                         .filter(product => this.cart.includes(product.id))
@@ -250,17 +130,14 @@
                             quantity: this.cart.filter(id => id === product.id).length
                         }));
                 },
-                //total price of cart
                 cartTotal() {
                     return this.cartDetails.reduce((total, item) => total + item.price * item.quantity, 0);
                 },
-                //make sure you can only add to cart if there is inventory
                 canAddToCart() {
                     return (product) => product.availableInventory > 0;
                 }
-            }
+            },
         });
     </script>
 </body>
-
 </html>
