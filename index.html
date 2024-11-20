@@ -22,6 +22,10 @@
         .cart-item img { max-width: 100px; border-radius: 8px; margin-bottom: 10px; }
         .cart-controls { display: flex; align-items: center; gap: 5px; }
         .cart-controls button { padding: 5px 10px; font-size: 1em; }
+        .form-field { margin: 10px 0; }
+        .form-field label { display: block; margin-bottom: 5px; }
+        .form-field input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        .error { color: red; font-size: 0.9em; }
     </style>
 </head>
 <body>
@@ -67,6 +71,20 @@
                     </div>
                 </div>
                 <p>Total Cart Amount: ${{ cartTotal }}</p>
+
+                <div class="form-field">
+                    <label for="name">Name: </label>
+                    <input type="text" id="name" v-model="customerName" placeholder="Enter your name">
+                    <p v-if="!customerName && attemptedCheckout" class="error"> Name is required</p>
+                </div>
+
+                <div class="form-field">
+                    <label for="phone">Phone number: </label>
+                    <input type="tel" id="phone" v-model="customerPhone" placeholder="Enter your phone number">
+                    <p v-if="!customerPhone && attemptedCheckout" class="error"> Phone number is required</p>
+                    <p v-if="phoneError && customerPhone" class="error">Phone number must contain only digits.</p>
+                </div>
+
                 <button @click="checkout" :disabled="cart.length === 0">Proceed to Checkout</button>
             </div>
             <div v-else>
@@ -95,7 +113,11 @@
                     { id: 1009, title: "Robotics class", description: "1 Hour of robotics", price: 85, image: "images/robotics.jpg", availableInventory: 1 },
                     { id: 1010, title: "Economics class", description: "1 Hour of Economics", price: 95, image: "images/economics.jpg", availableInventory: 4 }
                 ],
-                cart: []
+                cart: [],
+                customerName: '',
+                customerPhone: '',
+                attemptedCheckout: false,
+                phoneError: false
             },
             methods: {
                 toggleCartView() {
@@ -112,10 +134,29 @@
                         product.availableInventory += item.quantity;
                     }
                 },
+                validatePhone() {
+                // Allow only numbers
+                    const phoneRegex = /^[0-9]+$/;
+                    this.phoneError = !phoneRegex.test(this.customerPhone);
+                },
                 checkout() {
-                    this.cart = [];
-                    this.products.forEach(product => product.availableInventory = product.availableInventory);
-                    this.toggleCartView();
+                    this.attemptedCheckout = true;
+                    this.validatePhone();
+                    if (this.customerName && !this.phoneError){
+                        alert(`Thank you for your purchase, ${this.customerName}!`);
+                        this.cart = [];
+                        this.customerName = '';
+                        this.customerPhone = '';
+                        this.products.forEach(product => product.availableInventory = product.availableInventory);
+                        this.toggleCartView();
+                    } else {
+                        if(!this.customerName){
+                            alert("Please provide your name.");
+                        }
+                        if(this.phoneError){
+                            alert("phone number must contain only numbers.")
+                        }
+                    }
                 }
             },
             computed: {
