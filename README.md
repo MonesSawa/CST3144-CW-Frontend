@@ -6,11 +6,11 @@ functionality so far:
 + change availability when added to cart
 + disable checkout when cart is empty
 + remove from cart
++ enter name and phone number on checkout
++ the checkout process
++ sort
 
   
 missing functionality:
-- sort
-- enter name and phone number on checkout
-- the checkout process
 - MIDDLEWARE (EXPRESS)
 - BACKEND (MONGODB)

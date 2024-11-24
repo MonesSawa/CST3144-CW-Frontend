@@ -33,6 +33,16 @@
         <!-- Header with Cart Button -->
         <header>
             <h1 v-text="sitename"></h1>
+
+            <div>
+            <label for="sortOptions">Sort by:</label>
+            <select id="sortOptions" v-model="sortOptions" @change="sortProducts">
+                <option value="available"> Classes Available</option>
+                <option value="priceAsc">Price: Low to High</option>
+                <option value="priceDesc">Price: High to Low</option>
+            </select>
+            </div>
+
             <button :disabled="cart.length === 0" @click="toggleCartView">
                 <span v-if="cartItemCount">{{ cartItemCount }}</span>
                 <span class="fas fa-cart-plus"></span> Checkout
@@ -117,7 +127,8 @@
                 customerName: '',
                 customerPhone: '',
                 attemptedCheckout: false,
-                phoneError: false
+                phoneError: false,
+                sortOptions: 'available',
             },
             methods: {
                 toggleCartView() {
@@ -132,6 +143,15 @@
                     const product = this.products.find(p => p.id === item.id);
                     if (product) {
                         product.availableInventory += item.quantity;
+                    }
+                },
+                sortProducts(){
+                    if (this.sortOptions === 'available'){
+                        this.products.sort((a, b) => b.availableInventory - a.availableInventory);
+                    } else if (this.sortOptions === 'priceAsc'){
+                        this.products.sort((a, b) => a.price - b.price);
+                    } else if (this.sortOptions === 'priceDesc'){
+                        this.products.sort((a, b) => b.price - a.price);
                     }
                 },
                 validatePhone() {
