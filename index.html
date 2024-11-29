@@ -84,8 +84,9 @@
 
                 <div class="form-field">
                     <label for="name">Name: </label>
-                    <input type="text" id="name" v-model="customerName" placeholder="Enter your name">
+                    <input type="text" id="name" v-model="customerName" @input="validateName" placeholder="Enter your name">
                     <p v-if="!customerName && attemptedCheckout" class="error"> Name is required</p>
+                    <p v-if="nameError" class="error">Name must contain only letters and spaces.</p>
                 </div>
 
                 <div class="form-field">
@@ -159,10 +160,22 @@
                     const phoneRegex = /^[0-9]+$/;
                     this.phoneError = !phoneRegex.test(this.customerPhone);
                 },
+                validateName() {
+                // Allow only letters (a-z, A-Z) and spaces
+                    const nameRegex = /^[a-zA-Z\s]*$/;
+                    if (!nameRegex.test(this.customerName)) {
+                        this.nameError = "Name must contain only letters and spaces.";
+                    } else {
+                        this.nameError = ""; // Clear error if the name is valid
+                    }
+                },
+
                 checkout() {
                     this.attemptedCheckout = true;
                     this.validatePhone();
-                    if (this.customerName && !this.phoneError){
+                    this.validateName();
+
+                    if (this.customerName && !this.nameError && !this.phoneError){
                         alert(`Thank you for your purchase, ${this.customerName}!`);
                         this.cart = [];
                         this.customerName = '';
@@ -172,6 +185,9 @@
                     } else {
                         if(!this.customerName){
                             alert("Please provide your name.");
+                        }
+                        if(this.nameError){
+                            alert(this.nameError);
                         }
                         if(this.phoneError){
                             alert("phone number must contain only numbers.")
