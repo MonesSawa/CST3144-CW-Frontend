@@ -107,114 +107,129 @@
 
     <!-- Vue JS for Functionality -->
     <script>
-        let webstore = new Vue({
-            el: '#app',
-            data: {
-                sitename: 'After School Club',
-                showProduct: true,
-                products: [
-                    { id: 1001, title: "Art class", description: "1 Hour of art class", price: 64, image: "images/art.jpg", availableInventory: 5 },
-                    { id: 1002, title: "Music class", description: "1 Hour of music theory", price: 60, image: "images/music.jpg", availableInventory: 3 },
-                    { id: 1003, title: "Math class", description: "1 Hour of Math class", price: 70, image: "images/math.jpg", availableInventory: 2 },
-                    { id: 1004, title: "History class", description: "1 Hour of History", price: 75, image: "images/history.jpg", availableInventory: 1 },
-                    { id: 1005, title: "Science class", description: "1 Hour of Science", price: 80, image: "images/science.jpg", availableInventory: 0 },
-                    { id: 1006, title: "Geography class", description: "1 Hour of Geography", price: 65, image: "images/Geo.jpg", availableInventory: 5 },
-                    { id: 1007, title: "Arabic class", description: "1 Hour of Arabic tutoring", price: 68, image: "images/arabic.jpg", availableInventory: 3 },
-                    { id: 1008, title: "Coding class", description: "1 Hour of coding basics", price: 90, image: "images/coding.jpg", availableInventory: 4 },
-                    { id: 1009, title: "Robotics class", description: "1 Hour of robotics", price: 85, image: "images/robotics.jpg", availableInventory: 1 },
-                    { id: 1010, title: "Economics class", description: "1 Hour of Economics", price: 95, image: "images/economics.jpg", availableInventory: 4 }
-                ],
-                cart: [],
-                customerName: '',
-                customerPhone: '',
-                attemptedCheckout: false,
-                phoneError: false,
-                sortOptions: 'available',
-            },
-            methods: {
-                toggleCartView() {
-                    this.showProduct = !this.showProduct;
+        // Vue Component
+let webstore = new Vue({
+    el: '#app',
+    data: {
+        sitename: 'After School Club',
+        showProduct: true,
+        products: [],
+        cart: [],
+        customerName: '',
+        customerPhone: '',
+        attemptedCheckout: false,
+        phoneError: false,
+        sortOptions: 'available',
+        apiUrl: 'http://localhost:3000/lessons', // Replace with your backend URL
+    },
+    methods: {
+        async fetchLessons() {
+            try {
+                const response = await fetch(`${this.apiUrl}?sort=${this.sortOptions}`);
+                if (!response.ok) throw new Error('Failed to fetch lessons.');
+                this.products = await response.json();
+            } catch (error) {
+                console.error(error);
+                alert('Could not load lessons. Please try again later.');
+            }
+        },
+        toggleCartView() {
+            this.showProduct = !this.showProduct;
+        },
+        async addToCart(product) {
+            // Decrease the available inventory locally
+            if (product.availableInventory > 0) {
+                product.availableInventory--;
+                this.cart.push(product.id);
+                
+                // Send PUT request to update inventory on the backend
+                await this.updateLessonInventory(product);
+            }
+        },
+        removeFromCart(item) {
+            this.cart = this.cart.filter(id => id !== item.id);
+            const product = this.products.find(p => p.id === item.id);
+            if (product) {
+                product.availableInventory += item.quantity;
+            }
+        },
+            async updateLessonInventory(product) {
+            const response = await fetch(`${this.apiUrl}/${product.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
                 },
-                addToCart(product) {
-                    product.availableInventory--;
-                    this.cart.push(product.id);
-                },
-                removeFromCart(item) {
-                    this.cart = this.cart.filter(id => id !== item.id);
-                    const product = this.products.find(p => p.id === item.id);
-                    if (product) {
-                        product.availableInventory += item.quantity;
-                    }
-                },
-                sortProducts(){
-                    if (this.sortOptions === 'available'){
-                        this.products.sort((a, b) => b.availableInventory - a.availableInventory);
-                    } else if (this.sortOptions === 'priceAsc'){
-                        this.products.sort((a, b) => a.price - b.price);
-                    } else if (this.sortOptions === 'priceDesc'){
-                        this.products.sort((a, b) => b.price - a.price);
-                    }
-                },
-                validatePhone() {
-                // Allow only numbers
-                    const phoneRegex = /^[0-9]+$/;
-                    this.phoneError = !phoneRegex.test(this.customerPhone);
-                },
-                validateName() {
-                // Allow only letters (a-z, A-Z) and spaces
-                    const nameRegex = /^[a-zA-Z\s]*$/;
-                    if (!nameRegex.test(this.customerName)) {
-                        this.nameError = "Name must contain only letters and spaces.";
-                    } else {
-                        this.nameError = ""; // Clear error if the name is valid
-                    }
-                },
+                body: JSON.stringify({
+                    availableInventory: product.availableInventory
+                })
+            });
 
-                checkout() {
-                    this.attemptedCheckout = true;
-                    this.validatePhone();
-                    this.validateName();
+            if (!response.ok) {
+                console.error('Failed to update inventory on backend');
+            }
+        },
+        async sortProducts() {
+            await this.fetchLessons();
+        },
+        validatePhone() {
+            const phoneRegex = /^[0-9]+$/;
+            this.phoneError = !phoneRegex.test(this.customerPhone);
+        },
+        validateName() {
+            const nameRegex = /^[a-zA-Z\s]*$/;
+            this.nameError = !nameRegex.test(this.customerName) ? 'Name must contain only letters and spaces.' : '';
+        },
+        async checkout() {
+                this.attemptedCheckout = true;
+                this.validatePhone();
+                this.validateName();
 
-                    if (this.customerName && !this.nameError && !this.phoneError){
-                        alert(`Thank you for your purchase, ${this.customerName}!`);
-                        this.cart = [];
-                        this.customerName = '';
-                        this.customerPhone = '';
-                        this.products.forEach(product => product.availableInventory = product.availableInventory);
-                        this.toggleCartView();
-                    } else {
-                        if(!this.customerName){
-                            alert("Please provide your name.");
-                        }
-                        if(this.nameError){
-                            alert(this.nameError);
-                        }
-                        if(this.phoneError){
-                            alert("phone number must contain only numbers.")
+                if (this.customerName && !this.nameError && !this.phoneError) {
+                    // Proceed with updating inventory for all cart items
+                    for (let itemId of this.cart) {
+                        const product = this.products.find(p => p.id === itemId);
+                        if (product) {
+                            await this.updateLessonInventory(product); // Ensure the inventory is updated on the backend
                         }
                     }
+
+                    alert(`Thank you for your purchase, ${this.customerName}!`);
+
+                    // Clear cart and reset fields after checkout
+                    this.cart = [];
+                    this.customerName = '';
+                    this.customerPhone = '';
+                    this.toggleCartView();
+                } else {
+                    if (!this.customerName) alert('Please provide your name.');
+                    if (this.nameError) alert(this.nameError);
+                    if (this.phoneError) alert('Phone number must contain only numbers.');
                 }
             },
+        },
             computed: {
-                cartItemCount() {
-                    return this.cart.length || "";
-                },
-                cartDetails() {
-                    return this.products
-                        .filter(product => this.cart.includes(product.id))
-                        .map(product => ({
-                            ...product,
-                            quantity: this.cart.filter(id => id === product.id).length
-                        }));
-                },
-                cartTotal() {
-                    return this.cartDetails.reduce((total, item) => total + item.price * item.quantity, 0);
-                },
-                canAddToCart() {
-                    return (product) => product.availableInventory > 0;
-                }
-            },
-        });
+        cartItemCount() {
+            return this.cart.length || '';
+        },
+        cartDetails() {
+            return this.products
+                .filter(product => this.cart.includes(product.id))
+                .map(product => ({
+                    ...product,
+                    quantity: this.cart.filter(id => id === product.id).length,
+                }));
+        },
+        cartTotal() {
+            return this.cartDetails.reduce((total, item) => total + item.price * item.quantity, 0);
+        },
+        canAddToCart() {
+            return product => product.availableInventory > 0;
+        },
+    },
+    async mounted() {
+        await this.fetchLessons();
+    },
+});
     </script>
 </body>
 </html>
