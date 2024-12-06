@@ -58,6 +58,7 @@
                     <p v-html="product.description"></p>
                     <p>Price: ${{ product.price }}</p>
                     <p>Available: {{ product.availableInventory }}</p>
+                    <p>Location: {{ product.location || 'location not available' }}</p>
                     <button :disabled="!canAddToCart(product)" @click="addToCart(product)">
                         Add to cart
                     </button>
@@ -128,6 +129,8 @@ let webstore = new Vue({
                 const response = await fetch(`${this.apiUrl}?sort=${this.sortOptions}`);
                 if (!response.ok) throw new Error('Failed to fetch lessons.');
                 this.products = await response.json();
+
+                console.log(this.products);
             } catch (error) {
                 console.error(error);
                 alert('Could not load lessons. Please try again later.');
