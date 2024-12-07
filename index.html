@@ -188,21 +188,42 @@ let webstore = new Vue({
                 this.validateName();
 
                 if (this.customerName && !this.nameError && !this.phoneError) {
-                    // Proceed with updating inventory for all cart items
-                    for (let itemId of this.cart) {
-                        const product = this.products.find(p => p.id === itemId);
-                        if (product) {
-                            await this.updateLessonInventory(product); // Ensure the inventory is updated on the backend
+                    const cartDetails = this.cartDetails.map(item => ({
+                        id: item.id,
+                        title: item.title,
+                        quantity: item.quantity
+                    }));
+
+                    try {
+                        const response = await fetch('http://localhost:3000/checkout', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                name: this.customerName,
+                                phone: this.customerPhone,
+                                cart: cartDetails
+                            })
+                        });
+
+                        if (!response.ok) {
+                            const errorData = await response.json();
+                            console.error('Failed to save customer order:', errorData);
+                            alert('Failed to save your order. Please try again later.');
+                            return;
                         }
+
+                        const result = await response.json();
+                        alert(`Thank you for your purchase, ${this.customerName}! Your order ID is: ${result.customerId}`);
+
+                        // Clear cart and reset fields after checkout
+                        this.cart = [];
+                        this.customerName = '';
+                        this.customerPhone = '';
+                        this.toggleCartView();
+                    } catch (error) {
+                        console.error('Error during checkout:', error);
+                        alert('An error occurred while processing your order. Please try again later.');
                     }
-
-                    alert(`Thank you for your purchase, ${this.customerName}!`);
-
-                    // Clear cart and reset fields after checkout
-                    this.cart = [];
-                    this.customerName = '';
-                    this.customerPhone = '';
-                    this.toggleCartView();
                 } else {
                     if (!this.customerName) alert('Please provide your name.');
                     if (this.nameError) alert(this.nameError);
