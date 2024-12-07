@@ -130,6 +130,15 @@ let webstore = new Vue({
                 if (!response.ok) throw new Error('Failed to fetch lessons.');
                 this.products = await response.json();
 
+                 // Sort the products based on the sort option
+                if (this.sortOptions === 'priceAsc') {
+                    products.sort((a, b) => a.price - b.price);
+                } else if (this.sortOptions === 'priceDesc') {
+                    products.sort((a, b) => b.price - a.price);
+                } else if (this.sortOptions === 'available') {
+                    products.sort((a, b) => b.availableInventory - a.availableInventory);
+                }
+                this.products = products;
                 console.log(this.products);
             } catch (error) {
                 console.error(error);
