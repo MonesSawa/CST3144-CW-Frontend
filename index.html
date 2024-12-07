@@ -18,8 +18,10 @@
         .product button { margin-top: 10px; padding: 10px 15px; background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; }
         .product button:disabled { background-color: #ddd; cursor: not-allowed; }
         .cart-page { text-align: center; }
-        .cart-item { display: grid;grid-template-columns: repeat(5, 1fr); margin-bottom: 20px; border: 1px solid #ddd; padding: 10px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }
-        .cart-item img { max-width: 100px; border-radius: 8px; }
+        .cart-item { display: grid;grid-template-columns: repeat(5, 1fr); flex-direction: column; align-items: center; margin-bottom: 20px; border: 1px solid #ddd; padding: 10px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }
+        .cart-item img { max-width: 100px; border-radius: 8px; margin-bottom: 10px; }
+        .cart-controls { display: flex; align-items: center; gap: 5px; }
+        .cart-controls button { padding: 5px 10px; font-size: 1em; }
         .form-field { margin: 10px 0; }
         .form-field label { display: block; margin-bottom: 5px; }
         .form-field input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
@@ -28,23 +30,26 @@
 </head>
 <body>
     <div id="app">
+        <!-- Header with Cart Button -->
         <header>
             <h1 v-text="sitename"></h1>
+
             <div>
-                <label for="sortOptions">Sort by:</label>
-                <select id="sortOptions" v-model="sortOptions" @change="sortProducts">
-                    <option value="available">Classes Available</option>
-                    <option value="priceAsc">Price: Low to High</option>
-                    <option value="priceDesc">Price: High to Low</option>
-                </select>
+            <label for="sortOptions">Sort by:</label>
+            <select id="sortOptions" v-model="sortOptions" @change="sortProducts">
+                <option value="available"> Classes Available</option>
+                <option value="priceAsc">Price: Low to High</option>
+                <option value="priceDesc">Price: High to Low</option>
+            </select>
             </div>
 
             <button :disabled="cart.length === 0" @click="toggleCartView">
-                <span v-if="cartItemCount">{{ cartItemCount }}</span> 
-                Checkout
+                <span v-if="cartItemCount">{{ cartItemCount }}</span>
+                <span class="fas fa-cart-plus"></span> Checkout
             </button>
         </header>
 
+        <!-- Products Page -->
         <main v-if="showProduct">
             <div class="product-grid">
                 <div v-for="product in products" :key="product.id" class="product">
@@ -53,107 +58,202 @@
                     <p v-html="product.description"></p>
                     <p>Price: ${{ product.price }}</p>
                     <p>Available: {{ product.availableInventory }}</p>
-                    <button :disabled="!canAddToCart(product)" @click="addToCart(product)">Add to cart</button>
+                    <p>Location: {{ product.location || 'location not available' }}</p>
+                    <button :disabled="!canAddToCart(product)" @click="addToCart(product)">
+                        Add to cart
+                    </button>
                 </div>
             </div>
         </main>
 
+        <!-- Cart Page -->
         <main v-if="!showProduct" class="cart-page">
             <h3>Your Cart</h3>
             <div v-if="cartDetails.length">
                 <div v-for="item in cartDetails" :key="item.id" class="cart-item">
+                    <img :src="item.image" alt="Product Image">
                     <h2 v-text="item.title"></h2>
-                    <p>Price: ${{ item.price }}</p>
+                    <p v-html="item.description"></p>
+                    <p>Price per unit: ${{ item.price }}</p>
+                    <p>Total: ${{ item.price * item.quantity }}</p>
                     <p>Quantity: {{ item.quantity }}</p>
-                    <button @click="removeFromCart(item)">Remove</button>
+                    <div class="cart-controls">
+                        <button @click="removeFromCart(item)">Remove</button>
+                    </div>
                 </div>
-
-                <p>Total: ${{ cartTotal }}</p>
+                <p>Total Cart Amount: ${{ cartTotal }}</p>
 
                 <div class="form-field">
                     <label for="name">Name: </label>
-                    <input type="text" id="name" v-model="customerName" placeholder="Enter your name">
+                    <input type="text" id="name" v-model="customerName" @input="validateName" placeholder="Enter your name">
+                    <p v-if="!customerName && attemptedCheckout" class="error"> Name is required</p>
+                    <p v-if="nameError" class="error">Name must contain only letters and spaces.</p>
                 </div>
 
                 <div class="form-field">
-                    <label for="phone">Phone: </label>
-                    <input type="text" id="phone" v-model="customerPhone" placeholder="Enter your phone number">
+                    <label for="phone">Phone number: </label>
+                    <input type="tel" id="phone" v-model="customerPhone" placeholder="Enter your phone number">
+                    <p v-if="!customerPhone && attemptedCheckout" class="error"> Phone number is required</p>
+                    <p v-if="phoneError && customerPhone" class="error">Phone number must contain only digits.</p>
                 </div>
 
-                <button @click="checkout" :disabled="cart.length === 0">Checkout</button>
+                <button @click="checkout" :disabled="cart.length === 0">Proceed to Checkout</button>
             </div>
+            <div v-else>
+                <p>Your cart is empty.</p>
+            </div>
+            <button @click="toggleCartView">Back to Products</button>
         </main>
     </div>
 
+    <!-- Vue JS for Functionality -->
     <script>
-        new Vue({
-            el: '#app',
-            data: {
-                sitename: 'After School Club',
-                showProduct: true,
-                products: [],
-                cart: [],
-                customerName: '',
-                customerPhone: '',
-                sortOptions: 'available',
-                apiUrl: 'https://cst3144-cw-backend-n4k9.onrender.com/lessons'
-            },
-            methods: {
-                async fetchLessons() {
-                    const response = await fetch(this.apiUrl);
-                    this.products = await response.json();
-                },
-                toggleCartView() {
-                    this.showProduct = !this.showProduct;
-                },
-                addToCart(product) {
-                    product.availableInventory--;
-                    this.cart.push(product);
-                },
-                removeFromCart(product) {
-                    const index = this.cart.indexOf(product);
-                    this.cart.splice(index, 1);
-                    product.availableInventory++;
-                },
-                checkout() {
-                    if (!this.customerName || !this.customerPhone) {
-                        alert('Please fill in all the fields.');
-                        return;
-                    }
+        // Vue Component
+let webstore = new Vue({
+    el: '#app',
+    data: {
+        sitename: 'After School Club',
+        showProduct: true,
+        products: [],
+        cart: [],
+        customerName: '',
+        customerPhone: '',
+        attemptedCheckout: false,
+        phoneError: false,
+        sortOptions: 'available',
+        apiUrl: 'http://localhost:3000/lessons', // Replace with your backend URL
+    },
+    methods: {
+        async fetchLessons() {
+            try {
+                const response = await fetch(`${this.apiUrl}?sort=${this.sortOptions}`);
+                if (!response.ok) throw new Error('Failed to fetch lessons.');
+                this.products = await response.json();
 
-                    fetch('https://cst3144-cw-backend-n4k9.onrender.com/checkout', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            name: this.customerName,
-                            phone: this.customerPhone,
-                            cart: this.cart
-                        })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        alert(`Thank you for your order, ${this.customerName}!`);
+                console.log(this.products);
+            } catch (error) {
+                console.error(error);
+                alert('Could not load lessons. Please try again later.');
+            }
+        },
+        toggleCartView() {
+            this.showProduct = !this.showProduct;
+        },
+        async addToCart(product) {
+            // Decrease the available inventory locally
+            if (product.availableInventory > 0) {
+                product.availableInventory--;
+                this.cart.push(product.id);
+                
+                // Send PUT request to update inventory on the backend
+                await this.updateLessonInventory(product);
+            }
+        },
+        removeFromCart(item) {
+            this.cart = this.cart.filter(id => id !== item.id);
+            const product = this.products.find(p => p.id === item.id);
+            if (product) {
+                product.availableInventory += item.quantity;
+            }
+        },
+            async updateLessonInventory(product) {
+            const response = await fetch(`${this.apiUrl}/${product.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    availableInventory: product.availableInventory
+                })
+            });
+
+            if (!response.ok) {
+                console.error('Failed to update inventory on backend');
+            }
+        },
+        async sortProducts() {
+            await this.fetchLessons();
+        },
+        validatePhone() {
+            const phoneRegex = /^[0-9]+$/;
+            this.phoneError = !phoneRegex.test(this.customerPhone);
+        },
+        validateName() {
+            const nameRegex = /^[a-zA-Z\s]*$/;
+            this.nameError = !nameRegex.test(this.customerName) ? 'Name must contain only letters and spaces.' : '';
+        },
+        async checkout() {
+                this.attemptedCheckout = true;
+                this.validatePhone();
+                this.validateName();
+
+                if (this.customerName && !this.nameError && !this.phoneError) {
+                    const cartDetails = this.cartDetails.map(item => ({
+                        id: item.id,
+                        title: item.title,
+                        quantity: item.quantity
+                    }));
+
+                    try {
+                        const response = await fetch('http://localhost:3000/checkout', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                name: this.customerName,
+                                phone: this.customerPhone,
+                                cart: cartDetails
+                            })
+                        });
+
+                        if (!response.ok) {
+                            const errorData = await response.json();
+                            console.error('Failed to save customer order:', errorData);
+                            alert('Failed to save your order. Please try again later.');
+                            return;
+                        }
+
+                        const result = await response.json();
+                        alert(`Thank you for your purchase, ${this.customerName}! Your order ID is: ${result.customerId}`);
+
+                        // Clear cart and reset fields after checkout
                         this.cart = [];
-                    })
-                    .catch(error => alert('An error occurred during checkout.'));
-                },
-                cartItemCount() {
-                    return this.cart.length;
-                },
-                cartTotal() {
-                    return this.cart.reduce((total, item) => total + item.price, 0);
-                },
-                async sortProducts() {
-                    await this.fetchLessons();
-                },
-                canAddToCart(lesson){
-                        return lesson.availableInventory > 0;
+                        this.customerName = '';
+                        this.customerPhone = '';
+                        this.toggleCartView();
+                    } catch (error) {
+                        console.error('Error during checkout:', error);
+                        alert('An error occurred while processing your order. Please try again later.');
+                    }
+                } else {
+                    if (!this.customerName) alert('Please provide your name.');
+                    if (this.nameError) alert(this.nameError);
+                    if (this.phoneError) alert('Phone number must contain only numbers.');
                 }
             },
-            mounted() {
-                this.fetchLessons();
-            }
-        });
+        },
+            computed: {
+        cartItemCount() {
+            return this.cart.length || '';
+        },
+        cartDetails() {
+            return this.products
+                .filter(product => this.cart.includes(product.id))
+                .map(product => ({
+                    ...product,
+                    quantity: this.cart.filter(id => id === product.id).length,
+                }));
+        },
+        cartTotal() {
+            return this.cartDetails.reduce((total, item) => total + item.price * item.quantity, 0);
+        },
+        canAddToCart() {
+            return product => product.availableInventory > 0;
+        },
+    },
+    async mounted() {
+        await this.fetchLessons();
+    },
+});
     </script>
 </body>
 </html>
