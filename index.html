@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>After School Club</title>
 
-    <!-- Vue and FontAwesome links -->
+    <!-- Vue and CSS -->
     <script src="https://cdn.jsdelivr.net/npm/vue@2.7.16/dist/vue.js"></script>
     <style>
         body { font-family: Arial, sans-serif; margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; flex-direction: column; }
@@ -108,7 +108,6 @@
 
     <!-- Vue JS for Functionality -->
     <script>
-        // Vue Component
 let webstore = new Vue({
     el: '#app',
     data: {
@@ -121,7 +120,7 @@ let webstore = new Vue({
         attemptedCheckout: false,
         phoneError: false,
         sortOptions: 'available',
-        apiUrl: 'http://localhost:3000/lessons', // Replace with your backend URL
+        apiUrl: 'https://cst3144-cw-backend-n4k9.onrender.com/',
     },
     methods: {
         async fetchLessons() {

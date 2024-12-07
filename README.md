@@ -13,7 +13,18 @@ functionality so far:
 + database set up
 + database fetch and get
 + images fetch
++ render launched
++ customer and order data is able to be added to databased
   
 missing functionality:
-- MIDDLEWARE (EXPRESS)
-- logger
+- fixing image bug
+
+Github pages link:
+https://monessawa.github.io/CST3144-CW-Frontend/
+
+Render backend link:
+https://cst3144-cw-backend-n4k9.onrender.com/
+
+Github backend link:
+https://github.com/MonesSawa/CST3144-CW-Backend/tree/main
+
