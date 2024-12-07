@@ -145,6 +145,9 @@
                 },
                 async sortProducts() {
                     await this.fetchLessons();
+                },
+                canAddToCart(lesson){
+                        return lesson.availableInventory > 0;
                 }
             },
             mounted() {
