@@ -58,7 +58,7 @@
                     <p v-html="product.description"></p>
                     <p>Price: ${{ product.price }}</p>
                     <p>Available: {{ product.availableInventory }}</p>
-                    <p>Location: {{ product.location || location not available}}</p>
+                    <p>Location: {{ product.location || 'location not available' }}</p>
                     <button :disabled="!canAddToCart(product)" @click="addToCart(product)">
                         Add to cart
                     </button>
