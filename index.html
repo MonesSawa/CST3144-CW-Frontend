@@ -150,20 +150,13 @@ let webstore = new Vue({
             this.showProduct = !this.showProduct;
         },
         async addToCart(product) {
+            // Decrease the available inventory locally
             if (product.availableInventory > 0) {
-                product.availableInventory--; // Reduce the local inventory
-
-                const cartItem = this.cart.find(item => item.id === product._id);
-                if (cartItem) {
-                    cartItem.quantity++;
-                } else {
-                    this.cart.push({
-                        id: product._id,
-                        title: product.title,
-                        quantity: 1
-                    });
-                }
-                await this.updateLessonInventory(product._id);
+                product.availableInventory--;
+                this.cart.push(product.id);
+                
+                // Send PUT request to update inventory on the backend
+                await this.updateLessonInventory(product);
             }
         },
         removeFromCart(item) {
@@ -173,20 +166,19 @@ let webstore = new Vue({
                 product.availableInventory += item.quantity;
             }
         },
-        async updateLessonInventory(productId) {
-        try {
-                const response = await fetch(`https://cst3144-cw-backend-n4k9.onrender.com/lessons/${productId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ availableInventory: product.availableInventory })  // Decrease inventory by 1
-                });
+            async updateLessonInventory(product) {
+            const response = await fetch(`${this.apiUrl}/${product.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    availableInventory: product.availableInventory
+                })
+            });
 
-                if (!response.ok) {
-                    console.error('Failed to update inventory on backend:', await response.json());
-                    alert('Failed to update the inventory. Please try again later.');
-                }
-            } catch (error) {
-                console.error('Error updating lesson inventory:', error);
+            if (!response.ok) {
+                console.error('Failed to update inventory on backend');
             }
         },
         async sortProducts() {
