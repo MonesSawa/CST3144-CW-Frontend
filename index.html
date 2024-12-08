@@ -167,7 +167,7 @@ let webstore = new Vue({
             }
         },
             async updateLessonInventory(product) {
-            const response = await fetch(`${this.apiUrl}/${product.id}`, {
+            const response = await fetch(`${this.apiUrl}/${product._id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json'
