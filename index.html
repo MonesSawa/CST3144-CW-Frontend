@@ -53,12 +53,12 @@
         <main v-if="showProduct">
             <div class="product-grid">
                 <div v-for="product in products" :key="product._id" class="product">
-                    <img width="100" height="100" :src="'/public' + product.image" alt="Product Image">
+                    <img width="100" height="100" :src="'/CST3144-CW-Frontend'+'/public' + product.image" alt="Product Image">
                     <h2 v-text="product.title"></h2>
                     <p v-html="product.description"></p>
                     <p>Price: ${{ product.price }}</p>
                     <p>Available: {{ product.availableInventory }}</p>
-                    <p>Location: {{ product.location || 'location not available' }}</p>
+                    <p>Location: {{ product.location }}</p>
                     <button :disabled="!canAddToCart(product)" @click="addToCart(product)">
                         Add to cart
                     </button>
