@@ -52,7 +52,7 @@
         <!-- Products Page -->
         <main v-if="showProduct">
             <div class="product-grid">
-                <div v-for="product in products" :key="product._id" class="product">
+                <div v-for="product in products" :key="/public/product._id" class="product">
                     <img width="100" height="100" :src="product.image" alt="Product Image">
                     <h2 v-text="product.title"></h2>
                     <p v-html="product.description"></p>
