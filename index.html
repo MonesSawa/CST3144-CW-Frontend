@@ -174,7 +174,7 @@ let webstore = new Vue({
             }
         },
         async updateLessonInventory(productId) {
-            try {
+        try {
                 const response = await fetch(`https://cst3144-cw-backend-n4k9.onrender.com/lessons/${productId}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
@@ -206,7 +206,7 @@ let webstore = new Vue({
                 this.validateName();
 
                 if (this.customerName && !this.nameError && !this.phoneError) {
-                    const cartDetails = this.cart.map(item => ({
+                    const cartDetails = this.cartDetails.map(item => ({
                         id: item.id,
                         title: item.title,
                         quantity: item.quantity
@@ -233,10 +233,11 @@ let webstore = new Vue({
                         const result = await response.json();
                         alert(`Thank you for your purchase, ${this.customerName}! Your order ID is: ${result.customerId}`);
 
-                        this.cart = []; // Clear cart
-                        this.customerName = ''; // Reset customer name
-                        this.customerPhone = ''; // Reset phone number
-                        this.toggleCartView(); // Optionally, toggle cart visibility
+                        // Clear cart and reset fields after checkout
+                        this.cart = [];
+                        this.customerName = '';
+                        this.customerPhone = '';
+                        this.toggleCartView();
                     } catch (error) {
                         console.error('Error during checkout:', error);
                         alert('An error occurred while processing your order. Please try again later.');
