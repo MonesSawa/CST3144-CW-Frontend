@@ -153,7 +153,7 @@ let webstore = new Vue({
             // Decrease the available inventory locally
             if (product.availableInventory > 0) {
                 product.availableInventory--;
-                this.cart.push(product.id);
+                this.cart.push(product._id);
                 
                 // Send PUT request to update inventory on the backend
                 await this.updateLessonInventory(product);
@@ -161,7 +161,7 @@ let webstore = new Vue({
         },
         removeFromCart(item) {
             this.cart = this.cart.filter(id => id !== item.id);
-            const product = this.products.find(p => p.id === item.id);
+            const product = this.products.find(p => p._id === item._id);
             if (product) {
                 product.availableInventory += item.quantity;
             }
