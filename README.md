@@ -17,7 +17,8 @@ functionality so far:
 + customer and order data is able to be added to databased
   
 missing functionality:
-- fixing image bug
+- location is not available for certain locations
+- search
 
 Github pages link:
 https://monessawa.github.io/CST3144-CW-Frontend/
