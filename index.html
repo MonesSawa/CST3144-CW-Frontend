@@ -150,13 +150,20 @@ let webstore = new Vue({
             this.showProduct = !this.showProduct;
         },
         async addToCart(product) {
-            // Decrease the available inventory locally
             if (product.availableInventory > 0) {
-                product.availableInventory--;
-                this.cart.push(product.id);
-                
-                // Send PUT request to update inventory on the backend
-                await this.updateLessonInventory(product);
+                product.availableInventory--; // Reduce the local inventory
+
+                const cartItem = this.cart.find(item => item.id === product._id);
+                if (cartItem) {
+                    cartItem.quantity++;
+                } else {
+                    this.cart.push({
+                        id: product._id,
+                        title: product.title,
+                        quantity: 1
+                    });
+                }
+                await this.updateLessonInventory(product._id);
             }
         },
         removeFromCart(item) {
@@ -166,19 +173,20 @@ let webstore = new Vue({
                 product.availableInventory += item.quantity;
             }
         },
-            async updateLessonInventory(product) {
-            const response = await fetch(`${this.apiUrl}/${product.id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    availableInventory: product.availableInventory
-                })
-            });
+        async updateLessonInventory(productId) {
+            try {
+                const response = await fetch(`https://cst3144-cw-backend-n4k9.onrender.com/lessons/${productId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ change: -1 }) // Decrease inventory by 1
+                });
 
-            if (!response.ok) {
-                console.error('Failed to update inventory on backend');
+                if (!response.ok) {
+                    console.error('Failed to update inventory on backend:', await response.json());
+                    alert('Failed to update the inventory. Please try again later.');
+                }
+            } catch (error) {
+                console.error('Error updating lesson inventory:', error);
             }
         },
         async sortProducts() {
@@ -198,7 +206,7 @@ let webstore = new Vue({
                 this.validateName();
 
                 if (this.customerName && !this.nameError && !this.phoneError) {
-                    const cartDetails = this.cartDetails.map(item => ({
+                    const cartDetails = this.cart.map(item => ({
                         id: item.id,
                         title: item.title,
                         quantity: item.quantity
@@ -225,11 +233,10 @@ let webstore = new Vue({
                         const result = await response.json();
                         alert(`Thank you for your purchase, ${this.customerName}! Your order ID is: ${result.customerId}`);
 
-                        // Clear cart and reset fields after checkout
-                        this.cart = [];
-                        this.customerName = '';
-                        this.customerPhone = '';
-                        this.toggleCartView();
+                        this.cart = []; // Clear cart
+                        this.customerName = ''; // Reset customer name
+                        this.customerPhone = ''; // Reset phone number
+                        this.toggleCartView(); // Optionally, toggle cart visibility
                     } catch (error) {
                         console.error('Error during checkout:', error);
                         alert('An error occurred while processing your order. Please try again later.');
